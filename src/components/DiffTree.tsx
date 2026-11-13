@@ -8,7 +8,7 @@ import { previewValue, typeLabel } from '@/lib/json/display'
 import { getJsonType } from '@/lib/json/jsonType'
 import { formatPath } from '@/lib/json/path'
 import { buildMergedTree, flattenTree, type TreeNode, type TreeRow } from '@/lib/json/tree'
-import type { Difference, JsonValue } from '@/lib/json/types'
+import type { Difference, JsonValue, PathSegment } from '@/lib/json/types'
 import { cn } from '@/lib/utils'
 
 /** Fixed row height, so the virtualiser never has to measure rows. */
@@ -39,6 +39,8 @@ interface DiffTreeProps {
   selectedPath?: string | null
   /** Called with the JSONPath of the row that was clicked or activated with Enter. */
   onSelect?: (path: string) => void
+  /** Like `onSelect`, but also receives the node's path segments. */
+  onSelectNode?: (path: string, segments: readonly PathSegment[]) => void
 }
 
 type Container = JsonValue[] | { [key: string]: JsonValue }
@@ -269,6 +271,7 @@ export default function DiffTree({
   documents,
   selectedPath,
   onSelect,
+  onSelectNode,
 }: DiffTreeProps) {
   const switchId = useId()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -277,7 +280,8 @@ export default function DiffTree({
   const [changedOnly, setChangedOnly] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [chosenId, setChosenId] = useState<string | null>(null)
-  const selectedId = selectedPath ?? chosenId
+  // Without a controlled `selectedPath` the tree remembers its own last click.
+  const selectedId = selectedPath === undefined ? chosenId : selectedPath
 
   // Built when the Tree tab first mounts this component, never for the List tab alone.
   const fullTree = useMemo(() => {
@@ -296,6 +300,24 @@ export default function DiffTree({
   // Default expansion is depth 1: the root is open, so its children are visible.
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set([fullTree.id]))
 
+  // A selection that arrives from outside (the list) opens its ancestors. This runs while
+  // rendering, so the row exists in the very first frame. Later manual collapsing is respected.
+  const [revealed, setRevealed] = useState<string | null>(null)
+  if (selectedPath != null && selectedPath !== revealed) {
+    setRevealed(selectedPath)
+    const target = differences.find((d) => d.path === selectedPath)
+    if (target) {
+      const missing: string[] = []
+      for (let i = 0; i < target.segments.length; i++) {
+        const id = formatPath(target.segments.slice(0, i))
+        if (!expanded.has(id)) missing.push(id)
+      }
+      if (missing.length > 0) setExpanded(new Set([...expanded, ...missing]))
+    }
+  } else if (selectedPath == null && revealed !== null) {
+    setRevealed(null)
+  }
+
   const rows = useMemo(() => flattenTree(tree, expanded, { changedOnly }), [tree, expanded, changedOnly])
 
   const foundIndex = activeId === null ? -1 : rows.findIndex((row) => row.id === activeId)
@@ -313,6 +335,21 @@ export default function DiffTree({
       return [...indexes, activeIndex].sort((a, b) => a - b)
     },
   })
+
+  // Scrolls the selected row into view once it is rendered. Rows already visible stay put.
+  const scrolledTo = useRef<string | null>(null)
+  const { scrollToIndex } = virtualizer
+  useEffect(() => {
+    if (selectedPath == null) {
+      scrolledTo.current = null
+      return
+    }
+    if (scrolledTo.current === selectedPath) return
+    const index = rows.findIndex((row) => row.id === selectedPath)
+    if (index === -1) return
+    scrolledTo.current = selectedPath
+    scrollToIndex(index)
+  }, [selectedPath, rows, scrollToIndex])
 
   // Moves DOM focus once the requested row has been rendered.
   useEffect(() => {
@@ -367,6 +404,7 @@ export default function DiffTree({
     setActiveId(row.id)
     setChosenId(row.id)
     onSelect?.(row.id)
+    onSelectNode?.(row.id, row.node.segments)
   }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>, index: number) => {

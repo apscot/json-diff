@@ -7,7 +7,7 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { CompareOutcome } from '@/hooks/useCompare'
 import { filterDifferences } from '@/lib/json/filter'
-import type { DiffKind, DiffResult } from '@/lib/json/types'
+import type { DiffKind, DiffResult, PathSegment } from '@/lib/json/types'
 
 const NO_KINDS: ReadonlySet<DiffKind> = new Set()
 
@@ -26,8 +26,13 @@ function resultId(result: DiffResult): number {
 interface ResultsPanelProps {
   outcome: CompareOutcome
   loading?: boolean
-  /** Called with the JSONPath of the row that was clicked or activated with Enter. */
-  onSelect?: (path: string) => void
+  /** Called with the JSONPath and segments of the row that was clicked or activated with Enter. */
+  onSelect?: (path: string, segments: readonly PathSegment[]) => void
+  /**
+   * The selected path, owned by the caller. When omitted (undefined) the panel keeps its own
+   * selection. `null` means nothing is selected.
+   */
+  selectedPath?: string | null
 }
 
 function Message({ text, problem, loading }: { text: string; problem: boolean; loading: boolean }) {
@@ -46,14 +51,17 @@ function Differences({
   result,
   documents,
   onSelect,
+  selectedPath: controlledPath,
 }: {
   result: DiffResult
   documents?: TreeDocuments
-  onSelect?: (path: string) => void
+  onSelect?: (path: string, segments: readonly PathSegment[]) => void
+  selectedPath?: string | null
 }) {
   const [kind, setKind] = useState<KindFilter>('all')
   const [query, setQuery] = useState('')
-  const [selectedPath, setSelectedPath] = useState<string | null>(null)
+  const [ownPath, setOwnPath] = useState<string | null>(null)
+  const selectedPath = controlledPath === undefined ? ownPath : controlledPath
   // The input stays responsive while a huge list is re-filtered at lower priority.
   const deferredQuery = useDeferredValue(query)
   const { summary } = result
@@ -67,9 +75,9 @@ function Differences({
     [result.differences, kinds, deferredQuery],
   )
 
-  const select = (path: string) => {
-    setSelectedPath(path)
-    onSelect?.(path)
+  const select = (path: string, segments: readonly PathSegment[]) => {
+    setOwnPath(path)
+    onSelect?.(path, segments)
   }
 
   return (
@@ -111,7 +119,7 @@ function Differences({
                   visibleDifferences={visible}
                   documents={documents}
                   selectedPath={selectedPath}
-                  onSelect={select}
+                  onSelectNode={select}
                 />
               )}
             </TabsContent>
@@ -122,7 +130,12 @@ function Differences({
   )
 }
 
-function Body({ outcome, loading, onSelect }: Required<Pick<ResultsPanelProps, 'loading'>> & ResultsPanelProps) {
+function Body({
+  outcome,
+  loading,
+  onSelect,
+  selectedPath,
+}: Required<Pick<ResultsPanelProps, 'loading'>> & ResultsPanelProps) {
   switch (outcome.status) {
     case 'idle':
       return (
@@ -153,17 +166,23 @@ function Body({ outcome, loading, onSelect }: Required<Pick<ResultsPanelProps, '
           result={outcome.result}
           documents={outcome.documents}
           onSelect={onSelect}
+          selectedPath={selectedPath}
         />
   }
 }
 
-export default function ResultsPanel({ outcome, loading = false, onSelect }: ResultsPanelProps) {
+export default function ResultsPanel({
+  outcome,
+  loading = false,
+  onSelect,
+  selectedPath,
+}: ResultsPanelProps) {
   return (
     <section aria-label="Comparison results" className="flex flex-col gap-3 rounded-md border p-4">
       <h2 className="text-base font-semibold">Results</h2>
       <p className="text-xs text-muted-foreground">Arrays are compared by index.</p>
       <ErrorBoundary resetKey={outcome}>
-        <Body outcome={outcome} loading={loading} onSelect={onSelect} />
+        <Body outcome={outcome} loading={loading} onSelect={onSelect} selectedPath={selectedPath} />
       </ErrorBoundary>
     </section>
   )

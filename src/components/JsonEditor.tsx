@@ -80,11 +80,14 @@ const marksField = StateField.define<DecorationSet>({
 const markTheme = EditorView.baseTheme({
   '&light .cm-error-line': { backgroundColor: 'rgba(220, 38, 38, 0.12)' },
   '&dark .cm-error-line': { backgroundColor: 'rgba(248, 113, 113, 0.18)' },
+  // The outline keeps the active range visible without relying on the fill colour alone.
   '&light .cm-highlight-line, &light .cm-highlight-range': {
     backgroundColor: 'rgba(245, 158, 11, 0.3)',
+    outline: '1px solid rgba(180, 83, 9, 0.8)',
   },
   '&dark .cm-highlight-line, &dark .cm-highlight-range': {
     backgroundColor: 'rgba(245, 158, 11, 0.35)',
+    outline: '1px solid rgba(251, 191, 36, 0.9)',
   },
 })
 
@@ -157,12 +160,13 @@ export default function JsonEditor({
     })
   }, [view, errorLine, from, to])
 
-  // Scroll only when the requested range changes.
+  // Scroll when a range is requested. A new range object (even equal) scrolls again, so
+  // selecting the same difference after scrolling away brings it back into view.
   useEffect(() => {
-    if (!view || from === null) return
-    const pos = clamp(from, view.state.doc.length)
+    if (!view || !highlightRange) return
+    const pos = clamp(highlightRange.from, view.state.doc.length)
     view.dispatch({ effects: EditorView.scrollIntoView(pos, { y: 'center' }) })
-  }, [view, from, to])
+  }, [view, highlightRange])
 
   return (
     <div className="overflow-hidden rounded-md border text-sm">

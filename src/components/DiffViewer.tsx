@@ -1,9 +1,9 @@
-import { useRef, type KeyboardEvent } from 'react'
+import { useEffect, useRef, type KeyboardEvent } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import DiffKindBadge from '@/components/DiffKindBadge'
 import JsonPathDisplay from '@/components/JsonPathDisplay'
 import { previewValue } from '@/lib/json/display'
-import type { Difference, JsonValue } from '@/lib/json/types'
+import type { Difference, JsonValue, PathSegment } from '@/lib/json/types'
 import { cn } from '@/lib/utils'
 
 /** Fixed row height, so the virtualiser never has to measure rows. */
@@ -15,7 +15,7 @@ const COLUMNS = 'grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_9rem]'
 interface DiffViewerProps {
   differences: readonly Difference[]
   selectedPath?: string | null
-  onSelect?: (path: string) => void
+  onSelect?: (path: string, segments: readonly PathSegment[]) => void
 }
 
 function ValueCell({ difference, side }: { difference: Difference; side: 'original' | 'modified' }) {
@@ -55,11 +55,26 @@ export default function DiffViewer({ differences, selectedPath = null, onSelect 
     overscan: OVERSCAN,
   })
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLLIElement>, path: string) => {
+  // A selection made elsewhere (the tree) brings its row into view. Rows already visible stay put.
+  const scrolledTo = useRef<string | null>(null)
+  const { scrollToIndex } = virtualizer
+  useEffect(() => {
+    if (selectedPath === null) {
+      scrolledTo.current = null
+      return
+    }
+    if (scrolledTo.current === selectedPath) return
+    const index = differences.findIndex((difference) => difference.path === selectedPath)
+    if (index === -1) return
+    scrolledTo.current = selectedPath
+    scrollToIndex(index)
+  }, [selectedPath, differences, scrollToIndex])
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLLIElement>, difference: Difference) => {
     // Enter on the path's copy button must copy, not select.
     if (event.key === 'Enter' && event.target === event.currentTarget) {
       event.preventDefault()
-      onSelect?.(path)
+      onSelect?.(difference.path, difference.segments)
     }
   }
 
@@ -91,8 +106,8 @@ export default function DiffViewer({ differences, selectedPath = null, onSelect 
                 data-index={item.index}
                 tabIndex={0}
                 aria-current={selected ? 'true' : undefined}
-                onClick={() => onSelect?.(difference.path)}
-                onKeyDown={(event) => handleKeyDown(event, difference.path)}
+                onClick={() => onSelect?.(difference.path, difference.segments)}
+                onKeyDown={(event) => handleKeyDown(event, difference)}
                 className={cn(
                   'absolute top-0 left-0 grid w-full cursor-pointer items-center gap-3 border-b px-3 text-sm hover:bg-accent/50 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset',
                   COLUMNS,

@@ -6,20 +6,52 @@ import Workspace from '@/components/Workspace'
 import { useCompare } from '@/hooks/useCompare'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useShortcuts } from '@/hooks/useShortcuts'
+import { locatePath, type TextRange } from '@/lib/json/locate'
 import { formatJson, parseJson, type IndentOption } from '@/lib/json/parse'
 import { SAMPLE_MODIFIED, SAMPLE_ORIGINAL } from '@/lib/json/sample'
+import type { PathSegment } from '@/lib/json/types'
 
 // Preferences hold no JSON, only settings.
 const INDENT_KEY = 'indent'
 
+interface Selection {
+  path: string
+  left: TextRange | null
+  right: TextRange | null
+}
+
 export default function App() {
-  const [leftText, setLeftText] = useState(SAMPLE_ORIGINAL)
-  const [rightText, setRightText] = useState(SAMPLE_MODIFIED)
+  const [leftText, setLeftState] = useState(SAMPLE_ORIGINAL)
+  const [rightText, setRightState] = useState(SAMPLE_MODIFIED)
+  // The selected difference and where it sits in each text. Ranges are offsets into the texts
+  // as they were when the difference was selected, so any edit clears the selection.
+  const [selection, setSelection] = useState<Selection | null>(null)
+  const setLeftText = useCallback((value: string) => {
+    setSelection(null)
+    setLeftState(value)
+  }, [])
+  const setRightText = useCallback((value: string) => {
+    setSelection(null)
+    setRightState(value)
+  }, [])
   const [storedIndent, setIndent] = useLocalStorage<IndentOption>(INDENT_KEY, 2)
   const indent: IndentOption = storedIndent === 4 || storedIndent === 'tab' ? storedIndent : 2
   const [autoCompare, setAutoCompare] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const { outcome, loading, run, reset } = useCompare(leftText, rightText, { auto: autoCompare })
+
+  // Located lazily, only when a difference is clicked. A side without the node (added or
+  // removed) gets the range of its nearest ancestor from `locatePath`.
+  const selectDifference = useCallback(
+    (path: string, segments: readonly PathSegment[]) => {
+      setSelection({
+        path,
+        left: locatePath(leftText, segments),
+        right: locatePath(rightText, segments),
+      })
+    },
+    [leftText, rightText],
+  )
 
   const compareNow = useCallback(() => {
     setNotice(null)
@@ -31,7 +63,7 @@ export default function App() {
     setLeftText(rightText)
     setRightText(leftText)
     reset()
-  }, [leftText, rightText, reset])
+  }, [leftText, rightText, reset, setLeftText, setRightText])
 
   const formatBoth = useCallback(() => {
     const problems: string[] = []
@@ -43,26 +75,26 @@ export default function App() {
     apply('Original', leftText, setLeftText)
     apply('Modified', rightText, setRightText)
     setNotice(problems.length > 0 ? `${problems.join(' and ')}, so it was left unchanged.` : null)
-  }, [leftText, rightText, indent])
+  }, [leftText, rightText, indent, setLeftText, setRightText])
 
   const clearBoth = useCallback(() => {
     setNotice(null)
     setLeftText('')
     setRightText('')
     reset()
-  }, [reset])
+  }, [reset, setLeftText, setRightText])
 
   const clearLeft = useCallback(() => {
     setNotice(null)
     setLeftText('')
     reset()
-  }, [reset])
+  }, [reset, setLeftText])
 
   const clearRight = useCallback(() => {
     setNotice(null)
     setRightText('')
     reset()
-  }, [reset])
+  }, [reset, setRightText])
 
   const shortcuts = useShortcuts({ onCompare: compareNow, onFormat: formatBoth, onSwap: swap })
   // Inside an editor, stop the key event so the window listener does not run it a second time.
@@ -95,8 +127,15 @@ export default function App() {
           indent={indent}
           onIndentChange={setIndent}
           keymap={keymap}
+          leftRange={selection?.left ?? null}
+          rightRange={selection?.right ?? null}
         />
-        <ResultsPanel outcome={outcome} loading={loading} />
+        <ResultsPanel
+          outcome={outcome}
+          loading={loading}
+          onSelect={selectDifference}
+          selectedPath={selection?.path ?? null}
+        />
       </main>
     </div>
   )
