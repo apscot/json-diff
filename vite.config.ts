@@ -11,6 +11,18 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
+  server: {
+    // Bind all interfaces (IPv4 and IPv6) so both 127.0.0.1 and localhost reach it,
+    // and fail loudly instead of silently moving to another port.
+    host: true,
+    port: 5173,
+    strictPort: true,
+  },
+  preview: {
+    host: true,
+    port: 4173,
+    strictPort: true,
+  },
   test: {
     environment: 'jsdom',
     globals: true,
