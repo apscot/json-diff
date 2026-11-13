@@ -1,7 +1,10 @@
+import Header from '@/components/Header'
+
 export default function App() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background text-foreground">
-      <h1 className="text-2xl font-semibold">JSON Diff</h1>
-    </main>
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <Header />
+      <main className="flex flex-1 items-center justify-center" />
+    </div>
   )
 }
