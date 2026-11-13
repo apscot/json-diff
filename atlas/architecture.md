@@ -157,7 +157,7 @@ Not used: a router (single screen), a global state library, a backend, any analy
     │   ├── useCompare.ts          (parse both, call compare, pending/error state)
     │   └── useShortcuts.ts
     ├── components/
-    │   ├── Header.tsx             (logo, tagline, privacy badge, theme toggle, GitHub placeholder link)
+    │   ├── Header.tsx             (logo, tagline, privacy badge, theme toggle)
     │   ├── JsonEditor.tsx         (CodeMirror wrapper; props: value, onChange, error, highlightRange)
     │   ├── EditorToolbar.tsx      (copy, clear, format, minify, upload, indent select)
     │   ├── CompareButton.tsx

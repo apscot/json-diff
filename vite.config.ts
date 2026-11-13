@@ -5,6 +5,8 @@ import { defineConfig } from 'vitest/config'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // GitHub Pages serves the site from /<repo-name>/. Keep in sync with the repo name.
+  base: process.env.GITHUB_PAGES ? '/json-diff/' : '/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

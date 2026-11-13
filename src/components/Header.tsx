@@ -1,4 +1,4 @@
-import { CodeXml, Moon, ShieldCheck, Sun } from 'lucide-react'
+import { Moon, ShieldCheck, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import CompareButton from '@/components/CompareButton'
@@ -32,12 +32,6 @@ export default function Header({ onCompare, loading = false }: HeaderProps = {})
         </Badge>
         <ShortcutsPopover />
         <LimitationsPopover />
-        <Button variant="ghost" size="icon" asChild>
-          {/* Placeholder: the repository URL is not decided yet. */}
-          <a href="#" aria-label="GitHub (placeholder link)">
-            <CodeXml aria-hidden="true" />
-          </a>
-        </Button>
         <Button variant="ghost" size="icon" onClick={toggle} aria-label={label} title={label}>
           {isDark ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
         </Button>

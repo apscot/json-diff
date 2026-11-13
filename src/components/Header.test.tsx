@@ -9,12 +9,12 @@ beforeEach(() => {
 })
 
 describe('Header', () => {
-  it('renders logo, tagline, badge and placeholder link', () => {
+  it('renders logo, tagline and badge', () => {
     render(<Header />)
     expect(screen.getByText('JSON Diff')).toBeInTheDocument()
     expect(screen.getByText('Compare JSON. Find the difference.')).toBeInTheDocument()
     expect(screen.getByText('100% Local Processing')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /placeholder/i })).toHaveAttribute('href', '#')
+    expect(screen.queryByRole('link', { name: /placeholder/i })).not.toBeInTheDocument()
   })
 
   it('toggles the dark class and persists across a remount', async () => {
