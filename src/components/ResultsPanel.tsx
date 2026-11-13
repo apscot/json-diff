@@ -1,4 +1,7 @@
 import { useDeferredValue, useMemo, useState } from 'react'
+import { Download } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { buildReport, downloadJson, reportFileName } from '@/lib/json/report'
 import DiffFilters, { type KindFilter } from '@/components/DiffFilters'
 import DiffSummary from '@/components/DiffSummary'
 import DiffTree, { type TreeDocuments } from '@/components/DiffTree'
@@ -177,9 +180,27 @@ export default function ResultsPanel({
   onSelect,
   selectedPath,
 }: ResultsPanelProps) {
+  const result = outcome.status === 'result' ? outcome.result : null
+  // The report always carries the full difference list, never the filtered view.
+  const download = () => {
+    if (result) downloadJson(reportFileName(), buildReport(result))
+  }
   return (
     <section aria-label="Comparison results" className="flex flex-col gap-3 rounded-md border p-4">
-      <h2 className="text-base font-semibold">Results</h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-base font-semibold">Results</h2>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={download}
+          disabled={result === null}
+          title="Download the full difference report as JSON"
+        >
+          <Download aria-hidden="true" />
+          Download report
+        </Button>
+      </div>
       <p className="text-xs text-muted-foreground">Arrays are compared by index.</p>
       <ErrorBoundary resetKey={outcome}>
         <Body outcome={outcome} loading={loading} onSelect={onSelect} selectedPath={selectedPath} />

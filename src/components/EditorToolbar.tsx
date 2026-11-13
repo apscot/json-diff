@@ -74,8 +74,18 @@ export default function EditorToolbar({
       setNotice(`"${file.name}" is larger than 20 MB. Choose a smaller file.`)
       return
     }
+    const looksJson = /\.json$/i.test(file.name) || /json/i.test(file.type)
+    if (!looksJson) {
+      setNotice(`"${file.name}" is not a JSON file. Choose a .json file.`)
+      return
+    }
     try {
-      onChange(await file.text())
+      const text = await file.text()
+      if (text.includes('\u0000')) {
+        setNotice(`"${file.name}" is not a text JSON file.`)
+        return
+      }
+      onChange(text)
       setNotice(null)
     } catch {
       setNotice(`Could not read "${file.name}".`)
