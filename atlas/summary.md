@@ -39,3 +39,8 @@ Requires Node >= 22.12.
 - The JS bundle is a single chunk of about 896 kB, with no code splitting.
 - `JsonPathDisplay.tsx` has low test coverage (about 44%).
 - The final commit includes `vite.config.ts` changes that fix the dev port at 5173 and the preview port at 4173, bound to all interfaces with `strictPort`.
+
+## Reported issue: `npm run dev` fails with "Cannot find package '@tailwindcss/vite'"
+- Cause: dependencies are not installed on the user's machine. `@tailwindcss/vite`, `@vitejs/plugin-react` and `vitest` are all declared in `package.json` devDependencies and in `package-lock.json`, so this is not a code or config bug.
+- Fix: in the project root run `rm -rf node_modules && npm ci` (or `npm install`), then `npm run dev`. Needs Node >= 22.12. The README troubleshooting section covers this.
+- Verified here: with dependencies installed, `npm run build` exits 0 and `npm test` passes 275 tests. I could not reproduce the failure on the user's machine and did not start the dev server.
