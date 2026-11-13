@@ -20,6 +20,8 @@ npm run lint           # ESLint
 npm test               # vitest run
 npm run test:coverage  # vitest run --coverage
 ```
+Run `npm install` first in a fresh checkout. `node_modules/` is git-ignored, so "Cannot find package '@tailwindcss/vite' / '@vitejs/plugin-react' / 'vitest'" from `vite.config.ts` means dependencies are not installed (all three are in `package.json` devDependencies). If it persists, check `node -v` (>= 22.12), then `rm -rf node_modules && npm ci`.
+
 `dev`, `build`, `preview` and `lint` come from the create-vite template. Add `test` (`vitest run`) and `test:coverage` (`vitest run --coverage`) if missing. Do not invent other scripts.
 
 ## Where things live

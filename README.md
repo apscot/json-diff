@@ -29,6 +29,17 @@ npm run test:coverage  # tests with coverage (vitest run --coverage)
 
 `npm run test:coverage` writes an HTML report to `coverage/` and enforces thresholds from `vite.config.ts`: 70% line coverage overall, and 95% lines and statements and 90% branches for `src/lib/json/**`.
 
+## Troubleshooting
+
+**`Cannot find package '@tailwindcss/vite'` (or `@vitejs/plugin-react`, or `vitest/config`) imported from `vite.config.ts`**
+
+`vite.config.ts` imports these packages, and they are listed in `package.json`. This error means the dependencies are not installed in `node_modules`. You don't need to change `vite.config.ts`, `package.json` or any source code. To fix it:
+
+1. Check your Node version with `node -v`. It must be 22.12 or newer (the `engines` field in `package.json` requires `>=22.12`).
+2. Run `npm install` in the project root (the folder that contains `package.json`).
+3. If the error persists, do a clean install from the lockfile: `rm -rf node_modules && npm ci`.
+4. Start the app again with `npm run dev`.
+
 ## Using it
 
 1. Paste JSON into both panels, or use **Upload**. The panels start with a small sample.
