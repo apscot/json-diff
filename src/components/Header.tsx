@@ -1,9 +1,16 @@
 import { CodeXml, Moon, ShieldCheck, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import CompareButton from '@/components/CompareButton'
 import { useTheme } from '@/hooks/useTheme'
 
-export default function Header() {
+interface HeaderProps {
+  /** When given, a compact Compare button is shown on desktop. */
+  onCompare?: () => void
+  loading?: boolean
+}
+
+export default function Header({ onCompare, loading = false }: HeaderProps = {}) {
   const { isDark, toggle } = useTheme()
   const label = isDark ? 'Switch to light theme' : 'Switch to dark theme'
 
@@ -14,6 +21,9 @@ export default function Header() {
         <p className="text-sm text-muted-foreground">Compare JSON. Find the difference.</p>
       </div>
       <div className="flex items-center gap-2">
+        {onCompare ? (
+          <CompareButton compact onCompare={onCompare} loading={loading} className="hidden lg:inline-flex" />
+        ) : null}
         <Badge variant="secondary">
           <ShieldCheck aria-hidden="true" />
           100% Local Processing
