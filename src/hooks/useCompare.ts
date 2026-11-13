@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { compare } from '@/lib/json/diff'
 import { parseJson, type ParseError, type ParseResult } from '@/lib/json/parse'
-import type { DiffResult } from '@/lib/json/types'
+import type { DiffResult, JsonValue } from '@/lib/json/types'
 
 /** The loading flag is raised only when the work takes longer than this. */
 export const LOADING_DELAY_MS = 150
@@ -19,7 +19,7 @@ export type CompareOutcome =
   | { status: 'invalid'; left: SyntaxError | null; right: SyntaxError | null }
   /** The comparison itself failed (e.g. nesting too deep). */
   | { status: 'failed'; message: string }
-  | { status: 'result'; result: DiffResult }
+  | { status: 'result'; result: DiffResult; documents: { original: JsonValue; modified: JsonValue } }
 
 export const IDLE_OUTCOME: CompareOutcome = { status: 'idle' }
 
@@ -49,7 +49,11 @@ export function computeOutcome(leftText: string, rightText: string): CompareOutc
     if (!left.ok || !right.ok) {
       return { status: 'empty', message: emptyMessage(isEmpty(left), isEmpty(right)) }
     }
-    return { status: 'result', result: compare(left.value, right.value) }
+    return {
+      status: 'result',
+      result: compare(left.value, right.value),
+      documents: { original: left.value, modified: right.value },
+    }
   } catch (error) {
     if (error instanceof RangeError) return { status: 'failed', message: TOO_DEEP_MESSAGE }
     return { status: 'failed', message: 'Could not compare these documents.' }

@@ -1,6 +1,7 @@
 import { useDeferredValue, useMemo, useState } from 'react'
 import DiffFilters, { type KindFilter } from '@/components/DiffFilters'
 import DiffSummary from '@/components/DiffSummary'
+import DiffTree, { type TreeDocuments } from '@/components/DiffTree'
 import DiffViewer from '@/components/DiffViewer'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -41,7 +42,15 @@ function Message({ text, problem, loading }: { text: string; problem: boolean; l
   )
 }
 
-function Differences({ result, onSelect }: { result: DiffResult; onSelect?: (path: string) => void }) {
+function Differences({
+  result,
+  documents,
+  onSelect,
+}: {
+  result: DiffResult
+  documents?: TreeDocuments
+  onSelect?: (path: string) => void
+}) {
   const [kind, setKind] = useState<KindFilter>('all')
   const [query, setQuery] = useState('')
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
@@ -92,9 +101,19 @@ function Differences({ result, onSelect }: { result: DiffResult; onSelect?: (pat
               )}
             </TabsContent>
             <TabsContent value="tree">
-              <p className="rounded-md border p-4 text-sm text-muted-foreground">
-                The tree view is coming soon.
-              </p>
+              {visible.length === 0 ? (
+                <p className="rounded-md border p-4 text-sm text-muted-foreground">
+                  No differences match the current filters.
+                </p>
+              ) : (
+                <DiffTree
+                  differences={result.differences}
+                  visibleDifferences={visible}
+                  documents={documents}
+                  selectedPath={selectedPath}
+                  onSelect={select}
+                />
+              )}
             </TabsContent>
           </Tabs>
         </>
@@ -129,7 +148,12 @@ function Body({ outcome, loading, onSelect }: Required<Pick<ResultsPanelProps, '
     }
     case 'result':
       // Keyed by the result so filters and selection reset for each new comparison.
-      return <Differences key={resultId(outcome.result)} result={outcome.result} onSelect={onSelect} />
+      return <Differences
+          key={resultId(outcome.result)}
+          result={outcome.result}
+          documents={outcome.documents}
+          onSelect={onSelect}
+        />
   }
 }
 

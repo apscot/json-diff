@@ -106,11 +106,11 @@ describe('ResultsPanel', () => {
     expect(rows()[0]).not.toHaveAttribute('aria-current')
   })
 
-  it('shows a placeholder for the Tree tab', async () => {
+  it('renders the tree view for the Tree tab', async () => {
     const user = userEvent.setup()
     render(<ResultsPanel outcome={outcomeFor(LEFT, RIGHT)} />)
     await user.click(screen.getByRole('tab', { name: 'Tree' }))
-    expect(screen.getByText('The tree view is coming soon.')).toBeInTheDocument()
+    expect(screen.getByRole('tree')).toBeInTheDocument()
   })
 
   it('shows the no-differences state for identical documents', () => {
