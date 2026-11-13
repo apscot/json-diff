@@ -2,6 +2,18 @@
 
 JSON Diff is a browser-only tool for comparing two JSON documents. You paste or upload an *Original* and a *Modified* document, press Compare, and get a structural list of what was added, removed or changed, each with its JSONPath. There is no backend, no account and no network call: your JSON never leaves the browser.
 
+## Built by Atlas Studio
+
+This application was built by **Atlas Studio**. The project was created on 2026-11-13. Its planning and build records are in the `atlas/` folder:
+
+- `atlas/vision.md`: problem, target user, scope and definition of done.
+- `atlas/architecture.md`: design of the diff engine, components and state.
+- `atlas/CONSTRAINTS.md`: quality bar the code is held to.
+- `atlas/plan.md`, `atlas/tasks.md`: the build plan and task backlog.
+- `atlas/research.md`: background research.
+- `atlas/summary.md`: what was built, verification results and known limitations.
+- `atlas/run-reports/`: build run logs.
+
 Features:
 
 - Two CodeMirror editors with JSON highlighting, line numbers, live validation (with line and column), format, minify, copy, clear and `.json` upload (up to 20 MB).
