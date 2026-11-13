@@ -1,0 +1,48 @@
+# Research: JSON Diff & API Response Comparator
+
+Sources: two web searches (jd, wI2L/jsondiff, zjsonpatch, a tool-comparison page, CodeMirror/Monaco comparisons). Items marked *(unverified)* come from background knowledge, not from a source I checked.
+
+## How existing tools work
+- **Structural diff, not text diff.** Tools such as jd, jsondiff and zjsonpatch parse both documents into trees and walk them in parallel. They report added, removed and changed nodes, each with a path. Whitespace and key order drop out because the comparison runs on parsed values.
+- **Output formats vary.** jsondiff and zjsonpatch emit RFC 6902 JSON Patch operations (add, remove, replace). jd uses its own format. The prompt asks for a flat list of `{type, path, original, modified}` records, which is simpler than JSON Patch. Paths are written as JSONPath (`$.a.b[0]`) rather than JSON Pointer.
+- **Array strategies.**
+  - By index is the simplest. It is O(n) and predictable, but one inserted element makes every later element look modified. The spec chooses this for the MVP.
+  - LCS-based diffing, which jd uses, gives a minimal diff. It costs O(n·m) in the worst case, as zjsonpatch's complexity notes show.
+  - Matching by an identity key (`id`) or treating arrays as sets are the other common options. Both are post-MVP.
+  - Mitigation: say plainly in the UI that arrays are compared by index. A later "match by key" option is a natural extension.
+- **Editors in similar web tools.** The usual choices are CodeMirror 6 (small, modular, accessible, widely used as the lightweight option) or Monaco (VS Code's editor, heavier). Lighter alternatives are a textarea overlaid on a highlighted `<pre>`, or a small library such as a prism-based editor. *(Bundle sizes are not verified.)* Monaco has a built-in diff editor, but it is a text diff. It does not handle key reordering.
+- **Privacy.** Competing tools advertise "100% local, nothing uploaded". That is a real selling point, and it matches this spec's requirement.
+
+## Domain pitfalls to design and test for
+1. **Type-aware equality.** `1` vs `"1"`, `true` vs `"true"`, `null` vs a missing key, `{}` vs `null` and `[]` vs `null` must all be reported as different. Use a strict `typeof` plus null and array discrimination, with six types: object, array, string, number, boolean, null. `typeof null === "object"` and `typeof [] === "object"` are the classic traps.
+2. **Classifying differences.** There are four kinds: added (key or index only in the modified side), removed, modified (same type, different primitive value), and type-changed (the type differs). Null → string counts as a type change, not a modification. Null vs a missing key is added or removed. A type change at a container level (object → array) should be one difference at that path. The tool should not also report every child.
+3. **Key order.** Compare objects by key set, not by iteration order. Report differences in a deterministic order, such as the original's key order and then added keys, or sorted. This keeps tests and exports stable.
+4. **Number handling.** `JSON.parse` converts numbers to IEEE-754 doubles. Large integers (over 2^53) and high-precision decimals lose precision, so two different big IDs can compare equal. `1.0` and `1` also parse identically. *(Standard JS behaviour.)* This is a known limitation to document. A custom parser that keeps raw number text is a possible improvement. The spec says to use native `JSON.parse`, so the MVP should note the limitation. `-0` and `0` are another edge case: use `Object.is` or accept that they are equal, and document whichever is chosen.
+5. **Duplicate keys.** `JSON.parse` silently keeps the last one. Warn about this if feasible; otherwise document it.
+6. **Special keys.** `__proto__`, `constructor` and similar can appear as JSON keys. Use `Object.prototype.hasOwnProperty.call` or `Object.keys`, and avoid assigning to plain objects with arbitrary keys. `JSON.parse` creates `__proto__` as an own property, so an implementation that builds result objects keyed by path or key can be exposed to prototype pollution.
+7. **JSONPath formatting.** Plain identifiers use dot notation (`$.user.age`). Keys with spaces, dots, quotes or leading digits need bracket notation with escaping (`$['a.b']`, `$["it's"]`). Array indices use `[0]`. The root is `$`. Search and click-to-navigate must use the same path format everywhere.
+8. **Parse-error messages.** V8 and Firefox word `JSON.parse` errors differently. Chrome says "Unexpected token } in JSON at position 42" or, in newer versions, includes a snippet and line/column. Safari's messages are terse. To be helpful and consistent, the app should convert the position into line and column itself. Where the message has no position, it can fall back to the raw message. *(Browser message formats unverified in detail.)* Empty input should be its own case ("Input is empty"), not a parse error.
+9. **Top-level primitives are valid JSON.** `42`, `"x"` and `null` are valid documents. The engine must handle a root-level comparison, with path `$`.
+10. **Performance on large documents.**
+    - A recursive diff is linear, but very deep nesting can overflow the stack. Consider an iterative approach, or at least a try/catch around the recursion.
+    - `JSON.parse` and the diff should run off the main thread (a Web Worker) or be debounced for large inputs. The spec asks for debouncing and a loading indicator "only when necessary".
+    - Rendering is usually the bottleneck. Thousands of diff rows or tree nodes need virtualization or windowing, or "show first N, load more". A fully expanded tree of a multi-MB document will freeze the page.
+    - Syntax highlighting of huge text in the editor is also costly. CodeMirror 6 only renders the visible viewport, whereas an overlay-`<pre>` editor highlights everything. This is a real tradeoff for the editor-component choice.
+    - Large-document tests should use a generated fixture (for example 10k+ keys or array items) and assert correctness and a loose time bound. Strict timing assertions are flaky in CI.
+11. **Click-to-navigate to the editor.** Mapping a JSONPath back to a line in the editor requires source positions, which `JSON.parse` does not give. Options: scan the text with a small tokenizer that records path → offset, or use a position-aware parser. Navigating to the diff row or tree node is easy. Navigating to the editor line is harder, and its cost should be weighed against the spec's "navigate to or highlight in editors or result trees", which allows either.
+12. **Accessibility.** The spec requires colour plus label plus icon for diff kinds, so every diff type needs a text label and a distinct icon. Colours in both themes need sufficient contrast. The tree needs proper ARIA (`role="tree"`, `aria-expanded`) and keyboard operation. *(Standard WAI-ARIA practice.)*
+13. **Persistence and privacy.** Draft recovery in localStorage means user JSON, which may contain secrets (API tokens, PII), is stored in the browser. Make draft saving optional or clearly signposted, size-limited (localStorage has a quota of roughly 5 MB *(unverified)*) and wrapped in try/catch for quota errors. Never send data anywhere, and avoid third-party analytics, fonts or CDN scripts that could suggest otherwise. Bundle assets locally.
+14. **Report export.** Build a JSON file from a Blob and download it through an object URL. Include a timestamp, the summary counts, and the list of differences with `type`, `path`, `original` and `modified`. Use a distinguishable marker for "absent" so that a missing value (undefined) is not confused with `null`. For example, omit the field, or use an explicit `null` plus the type field. JSON cannot represent `undefined`, so the schema should say how it is handled.
+15. **Keyboard shortcuts.** `Cmd/Ctrl+Shift+F` and `Cmd/Ctrl+Shift+X` may collide with browser shortcuts in some browsers (for example, Firefox uses Ctrl+Shift+X for some features) *(unverified)*. Call `preventDefault`, test across browsers, and expose the shortcuts in the UI. Inside a code editor such as CodeMirror, `Mod-Enter` and others may already be bound, so shortcuts need to be registered on the editor as well as on the window.
+
+## Implications for the project
+- The comparison engine should be a pure function, `(a: JsonValue, b: JsonValue) => { differences, summary }`, with no DOM or React imports. That makes it easy to test in Vitest, including the large-fixture case.
+- The summary has four main counts (total, added, removed, modified) plus type changes. Decide whether "modified" includes type changes. The spec lists them separately, so the likely meaning is that they are disjoint and total = added + removed + modified + typeChanged. This is an assumption to state in the design.
+- A custom recursive diff is enough for the MVP. The spec allows a library, but a library would add JSON-Patch semantics and array heuristics that conflict with the by-index and path requirements. A hand-written engine gives full control over classification and paths. *(Judgement, not a sourced finding.)*
+- The main decisions for later stages are the editor component (CodeMirror 6 versus a lightweight textarea overlay), how results are virtualised, and how editor navigation works. These should be driven by the large-JSON requirement.
+- Out of scope per the spec: arrays matched by key or LCS, a semantic diff of numbers, and text-level diffs.
+
+## Could not verify
+- Current exact versions of Vite, Tailwind, shadcn/ui, CodeMirror and Vitest, and their compatibility. Later stages should check these.
+- Bundle-size figures for CodeMirror 6 and Monaco.
+- Per-browser `JSON.parse` error text and shortcut collisions.

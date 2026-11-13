@@ -1,0 +1,110 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.955 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.955 0 0);
+  --muted-foreground: oklch(0.45 0 0);
+  --accent: oklch(0.955 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.52 0.21 27);
+  --border: oklch(0.89 0 0);
+  --input: oklch(0.89 0 0);
+  --ring: oklch(0.55 0 0);
+
+  /* Diff kind tokens (AA contrast on the light background) */
+  --diff-added: oklch(0.45 0.13 150);
+  --diff-added-bg: oklch(0.95 0.05 150);
+  --diff-removed: oklch(0.5 0.2 25);
+  --diff-removed-bg: oklch(0.95 0.04 25);
+  --diff-modified: oklch(0.48 0.12 70);
+  --diff-modified-bg: oklch(0.96 0.07 85);
+  --diff-type-changed: oklch(0.47 0.2 305);
+  --diff-type-changed-bg: oklch(0.95 0.04 305);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.97 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.97 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.97 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.75 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.7 0.19 22);
+  --border: oklch(1 0 0 / 14%);
+  --input: oklch(1 0 0 / 18%);
+  --ring: oklch(0.65 0 0);
+
+  /* Diff kind tokens (AA contrast on the dark background) */
+  --diff-added: oklch(0.8 0.17 150);
+  --diff-added-bg: oklch(0.3 0.07 150);
+  --diff-removed: oklch(0.78 0.15 25);
+  --diff-removed-bg: oklch(0.3 0.08 25);
+  --diff-modified: oklch(0.85 0.15 85);
+  --diff-modified-bg: oklch(0.32 0.07 85);
+  --diff-type-changed: oklch(0.8 0.14 305);
+  --diff-type-changed-bg: oklch(0.31 0.09 305);
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-diff-added: var(--diff-added);
+  --color-diff-added-bg: var(--diff-added-bg);
+  --color-diff-removed: var(--diff-removed);
+  --color-diff-removed-bg: var(--diff-removed-bg);
+  --color-diff-modified: var(--diff-modified);
+  --color-diff-modified-bg: var(--diff-modified-bg);
+  --color-diff-type-changed: var(--diff-type-changed);
+  --color-diff-type-changed-bg: var(--diff-type-changed-bg);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

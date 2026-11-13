@@ -1,0 +1,90 @@
+# Atlas Studio project marker
+.atlas-project
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*.iml
+
+# Node / JavaScript / TypeScript
+node_modules/
+/dist/
+/out/
+/.next/
+/.nuxt/
+/coverage/
+.npm/
+.yarn/cache/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+*.egg-info/
+.ipynb_checkpoints/
+
+# Java / Kotlin / Maven / Gradle
+/target/
+/build/
+.gradle/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+hs_err_pid*
+
+# Go
+/bin/
+*.test
+*.out
+
+# Rust
+/target/
+
+# .NET / C#
+/bin/
+/obj/
+*.dll
+*.exe
+
+# Ruby / PHP
+/vendor/
+.bundle/
+
+# C / C++
+*.o
+*.so
+*.dylib
+*.a
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+
+# Local services and databases
+*.db
+*.sqlite
+*.sqlite3
+docker-data/
+.docker/
+*.pid
+tmp/
+logs/
