@@ -25,9 +25,10 @@ npm run test:coverage
 Requires Node >= 22.12.
 
 ## Verified in the finalization stage
-- `npm run build`: exit 0. It warns that the main chunk is about 896 kB.
+- `npm run build`: exit 0 (re-run in this pass, including the `prebuild` dependency check). It warns that the main chunk is about 896 kB.
 - `npm run lint`: not re-run in this pass. An earlier run showed 0 errors and 2 React Compiler warnings for TanStack Virtual.
-- `npm test`: 18 files, 275 tests passed.
+- `npm test`: passed (re-run in this pass; 275 tests across 18 files in the previous pass).
+- `node scripts/ensure-deps.mjs`: exit 0 with all dependencies present, so `predev` is a no-op on an installed checkout.
 - `npm run test:coverage`: not re-run in this pass. An earlier run exited 0.
 - I did not start the app or check the UI in a browser in this stage.
 
