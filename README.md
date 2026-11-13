@@ -33,7 +33,7 @@ npm run test:coverage  # tests with coverage (vitest run --coverage)
 
 **`Cannot find package '@tailwindcss/vite'` (or `@vitejs/plugin-react`, or `vitest/config`) imported from `vite.config.ts`**
 
-`vite.config.ts` imports these packages, and they are listed in `package.json`. This error means the dependencies are not installed in `node_modules`. You don't need to change `vite.config.ts`, `package.json` or any source code. To fix it:
+`vite.config.ts` imports these packages, and they are listed in `package.json`. This error means the dependencies are not installed in `node_modules`. You don't need to change `vite.config.ts`, `package.json` or any source code. `npm run dev` and `npm run build` now run `scripts/ensure-deps.mjs` first, which installs missing dependencies automatically. If you still see the error, do this:
 
 1. Check your Node version with `node -v`. It must be 22.12 or newer (the `engines` field in `package.json` requires `>=22.12`).
 2. Run `npm install` in the project root (the folder that contains `package.json`).

@@ -26,9 +26,9 @@ Requires Node >= 22.12.
 
 ## Verified in the finalization stage
 - `npm run build`: exit 0. It warns that the main chunk is about 896 kB.
-- `npm run lint`: 0 errors, 2 warnings. Both are React Compiler "incompatible library" notices for TanStack Virtual.
+- `npm run lint`: not re-run in this pass. An earlier run showed 0 errors and 2 React Compiler warnings for TanStack Virtual.
 - `npm test`: 18 files, 275 tests passed.
-- `npm run test:coverage`: exit 0, so the configured coverage thresholds pass.
+- `npm run test:coverage`: not re-run in this pass. An earlier run exited 0.
 - I did not start the app or check the UI in a browser in this stage.
 
 ## Known limitations
@@ -41,6 +41,8 @@ Requires Node >= 22.12.
 - The final commit includes `vite.config.ts` changes that fix the dev port at 5173 and the preview port at 4173, bound to all interfaces with `strictPort`.
 
 ## Reported issue: `npm run dev` fails with "Cannot find package '@tailwindcss/vite'"
-- Cause: dependencies are not installed on the user's machine. `@tailwindcss/vite`, `@vitejs/plugin-react` and `vitest` are all declared in `package.json` devDependencies and in `package-lock.json`, so this is not a code or config bug.
-- Fix: in the project root run `rm -rf node_modules && npm ci` (or `npm install`), then `npm run dev`. Needs Node >= 22.12. The README troubleshooting section covers this.
-- Verified here: with dependencies installed, `npm run build` exits 0 and `npm test` passes 275 tests. I could not reproduce the failure on the user's machine and did not start the dev server.
+- Cause: dependencies were not installed on the user's machine (no `node_modules`). `@tailwindcss/vite`, `@vitejs/plugin-react` and `vitest` are declared in `package.json` devDependencies and in `package-lock.json`, so the config was not wrong.
+- Fix applied: added `scripts/ensure-deps.mjs` and wired it as `predev` and `prebuild` npm hooks. If any required package is missing from `node_modules`, it runs `npm install` before Vite starts. So `npm run dev` now works on a fresh clone.
+- Manual fix, if needed: `rm -rf node_modules && npm ci`, then `npm run dev`. Needs Node >= 22.12. The README troubleshooting section covers this.
+- Verified here: I moved `node_modules/@tailwindcss/vite` away, ran the script, and it reinstalled the package. After `npm ci`, `npm run build` exits 0 and `npm test` passes 275 tests. I did not start the dev server, and I could not run it on the user's machine.
+- **User action:** run `npm install` once (or just `npm run dev`, which now does it).
