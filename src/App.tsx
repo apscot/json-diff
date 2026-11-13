@@ -4,6 +4,7 @@ import Header from '@/components/Header'
 import ResultsPanel from '@/components/ResultsPanel'
 import Workspace from '@/components/Workspace'
 import { useCompare } from '@/hooks/useCompare'
+import { readDrafts, useDrafts, type DraftProblem } from '@/hooks/useDrafts'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useShortcuts } from '@/hooks/useShortcuts'
 import { locatePath, type TextRange } from '@/lib/json/locate'
@@ -20,9 +21,17 @@ interface Selection {
   right: TextRange | null
 }
 
+function draftsProblemMessage(problem: DraftProblem | null): string | null {
+  if (problem === 'too-large') return 'A side over 1 MB was not saved as a draft.'
+  if (problem === 'storage') return 'Drafts could not be saved: browser storage is unavailable or full.'
+  return null
+}
+
 export default function App() {
-  const [leftText, setLeftState] = useState(SAMPLE_ORIGINAL)
-  const [rightText, setRightState] = useState(SAMPLE_MODIFIED)
+  // Drafts are restored only when the user has opted in; otherwise the samples load.
+  const [restored] = useState(readDrafts)
+  const [leftText, setLeftState] = useState(restored?.left ?? SAMPLE_ORIGINAL)
+  const [rightText, setRightState] = useState(restored?.right ?? SAMPLE_MODIFIED)
   // The selected difference and where it sits in each text. Ranges are offsets into the texts
   // as they were when the difference was selected, so any edit clears the selection.
   const [selection, setSelection] = useState<Selection | null>(null)
@@ -36,6 +45,7 @@ export default function App() {
   }, [])
   const [storedIndent, setIndent] = useLocalStorage<IndentOption>(INDENT_KEY, 2)
   const indent: IndentOption = storedIndent === 4 || storedIndent === 'tab' ? storedIndent : 2
+  const drafts = useDrafts(leftText, rightText)
   const [autoCompare, setAutoCompare] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const { outcome, loading, run, reset } = useCompare(leftText, rightText, { auto: autoCompare })
@@ -105,8 +115,17 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <a
+        href="#main"
+        className="sr-only rounded-md bg-background px-3 py-2 text-sm font-medium focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:ring-[3px] focus:ring-ring"
+      >
+        Skip to content
+      </a>
       <Header onCompare={compareNow} loading={loading} />
-      <main className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-4 p-4">
+      <main
+        id="main"
+        className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-3 p-3 sm:gap-4 sm:p-4 lg:p-6"
+      >
         <ActionBar
           onCompare={compareNow}
           onSwap={swap}
@@ -118,6 +137,9 @@ export default function App() {
           onAutoCompareChange={setAutoCompare}
           loading={loading}
           notice={notice}
+          saveDrafts={drafts.enabled}
+          onSaveDraftsChange={drafts.setEnabled}
+          draftsProblem={draftsProblemMessage(drafts.problem)}
         />
         <Workspace
           leftText={leftText}
@@ -130,12 +152,14 @@ export default function App() {
           leftRange={selection?.left ?? null}
           rightRange={selection?.right ?? null}
         />
-        <ResultsPanel
-          outcome={outcome}
-          loading={loading}
-          onSelect={selectDifference}
-          selectedPath={selection?.path ?? null}
-        />
+        <div className="min-w-0 pb-4">
+          <ResultsPanel
+            outcome={outcome}
+            loading={loading}
+            onSelect={selectDifference}
+            selectedPath={selection?.path ?? null}
+          />
+        </div>
       </main>
     </div>
   )

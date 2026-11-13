@@ -2,6 +2,8 @@ import { CodeXml, Moon, ShieldCheck, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import CompareButton from '@/components/CompareButton'
+import LimitationsPopover from '@/components/LimitationsPopover'
+import ShortcutsPopover from '@/components/ShortcutsPopover'
 import { useTheme } from '@/hooks/useTheme'
 
 interface HeaderProps {
@@ -15,12 +17,12 @@ export default function Header({ onCompare, loading = false }: HeaderProps = {})
   const label = isDark ? 'Switch to light theme' : 'Switch to dark theme'
 
   return (
-    <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
-      <div className="flex items-baseline gap-3">
+    <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b px-3 py-2 sm:px-4 sm:py-3">
+      <div className="flex flex-wrap items-baseline gap-x-3">
         <h1 className="text-xl font-semibold tracking-tight">JSON Diff</h1>
-        <p className="text-sm text-muted-foreground">Compare JSON. Find the difference.</p>
+        <p className="hidden text-sm text-muted-foreground sm:block">Compare JSON. Find the difference.</p>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-1 sm:gap-2">
         {onCompare ? (
           <CompareButton compact onCompare={onCompare} loading={loading} className="hidden lg:inline-flex" />
         ) : null}
@@ -28,6 +30,8 @@ export default function Header({ onCompare, loading = false }: HeaderProps = {})
           <ShieldCheck aria-hidden="true" />
           100% Local Processing
         </Badge>
+        <ShortcutsPopover />
+        <LimitationsPopover />
         <Button variant="ghost" size="icon" asChild>
           {/* Placeholder: the repository URL is not decided yet. */}
           <a href="#" aria-label="GitHub (placeholder link)">

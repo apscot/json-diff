@@ -107,4 +107,17 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* A visible focus ring for every keyboard-focusable element that has no ring of its own. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
